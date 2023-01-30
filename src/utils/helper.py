@@ -1,5 +1,7 @@
 import yt_dlp
 import validators
+import os
+import ffmpeg
 
 
 def is_supported(url):
@@ -37,3 +39,30 @@ def download_fb_video(url):
     }
     with yt_dlp.YoutubeDL(ydl_opts_sep) as ydl:
         ydl.download(url)
+
+
+def get_direct_fb_video_link(url):
+    compress_video('./temp/temp_fb.mp4', './temp/temp_fb_compressed.mp4', 8 * 1000)
+
+
+def compress_video(video_full_path, output_file_name, target_size):
+    # Reference: https://en.wikipedia.org/wiki/Bit_rate#Encoding_bit_rate
+    probe = ffmpeg.probe(video_full_path)
+    # Video duration, in s.
+    duration = float(probe['format']['duration'])
+    # Audio bitrate, in bps.
+    audio_bitrate = float(next((s for s in probe['streams'] if s['codec_type'] == 'audio'), None)['bit_rate'])
+    # Target total bitrate, in bps.
+    target_total_bitrate = (target_size * 1024 * 8) / (1.073741824 * duration)
+
+    audio_bitrate = 32000
+    # Target video bitrate, in bps.
+    video_bitrate = target_total_bitrate - audio_bitrate
+
+    i = ffmpeg.input(video_full_path)
+    ffmpeg.output(i, os.devnull,
+                  **{'c:v': 'libx264', 'b:v': video_bitrate, 'pass': 1, 'f': 'mp4'}
+                  ).overwrite_output().global_args('-loglevel', 'error').run()
+    ffmpeg.output(i, output_file_name,
+                  **{'c:v': 'libx264', 'b:v': video_bitrate, 'pass': 2, 'c:a': 'aac', 'b:a': audio_bitrate}
+                  ).overwrite_output().global_args('-loglevel', 'error').run()
