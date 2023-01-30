@@ -2,4 +2,5 @@
 .idea
 __pycache__
 venv
-/miyuki/temp/*
+src/temp/*
+src/ffmpeg*
