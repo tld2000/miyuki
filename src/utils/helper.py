@@ -32,6 +32,7 @@ def download_fb_video(url):
     ydl_opts_sep = {
         'format': 'bestvideo+worstaudio',
         'quiet': True,
+        'cookiefile': os.getenv('FB_COOKIES_FN'),
         #'verbose': True,
         'nooverwrites': False,
         'merge_output_format': 'mp4',
