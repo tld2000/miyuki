@@ -46,6 +46,7 @@ def get_direct_fb_video_link(url):
 
 
 def compress_video(video_full_path, output_file_name, target_size):
+    # Reference: https://stackoverflow.com/questions/64430805/how-to-compress-video-to-target-size-by-python
     # Reference: https://en.wikipedia.org/wiki/Bit_rate#Encoding_bit_rate
     probe = ffmpeg.probe(video_full_path)
     # Video duration, in s.
