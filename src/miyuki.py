@@ -19,6 +19,13 @@ class Client(commands.Bot):
                 await client.load_extension(f"cogs.{filename[:-3]}")
         # await client.tree.sync()
         print("Loaded cogs")
+        if not discord.opus.is_loaded():
+            # the 'opus' library here is opus.dll on windows
+            # or libopus.so on linux in the current directory
+            # you should replace this with the location the
+            # opus library is located in and with the proper filename.
+            # note that on windows this DLL is automatically provided for you
+            discord.opus.load_opus('opus')
 
 
 client = Client()
