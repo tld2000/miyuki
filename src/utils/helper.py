@@ -62,8 +62,8 @@ def compress_video(video_full_path, output_file_name, target_size):
 
     i = ffmpeg.input(video_full_path)
     ffmpeg.output(i, os.devnull,
-                  **{'c:v': 'libx264', 'b:v': video_bitrate, 'pass': 1, 'f': 'mp4'}
+                  **{'c:v': 'h264', 'b:v': video_bitrate, 'pass': 1, 'f': 'mp4'}
                   ).overwrite_output().global_args('-loglevel', 'error').run()
     ffmpeg.output(i, output_file_name,
-                  **{'c:v': 'libx264', 'b:v': video_bitrate, 'pass': 2, 'c:a': 'aac', 'b:a': audio_bitrate}
+                  **{'c:v': 'h264', 'b:v': video_bitrate, 'pass': 2, 'c:a': 'aac', 'b:a': audio_bitrate}
                   ).overwrite_output().global_args('-loglevel', 'error').run()
