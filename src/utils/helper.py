@@ -21,7 +21,7 @@ def to_playable(query):
 
 def is_fb_video(url):
     if validators.url(url):
-        if is_supported(url) or url.find('fb.watch') or url.find('facebook'):
+        if is_supported(url) and (url.find('fb.watch') or url.find('facebook')):
             if url.find('facebook') or url.find('fb'):
                 return True
 
