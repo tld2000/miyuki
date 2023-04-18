@@ -6,7 +6,8 @@ ytdl_format_options = {
     'format': 'bestaudio/best',
     'outtmpl': '%(extractor)s-%(id)s-%(title)s.%(ext)s',
     'restrictfilenames': True,
-    'noplaylist': True,
+    'noplaylist': False,
+    'playlist_items': f'1-{100}',
     'nocheckcertificate': True,
     'ignoreerrors': False,
     'logtostderr': False,
@@ -29,7 +30,6 @@ class YTDLSource(discord.PCMVolumeTransformer):
         super().__init__(source, volume)
 
         self.data = data
-
         self.title = data.get('title')
         self.url = data.get('url')
 
@@ -37,12 +37,18 @@ class YTDLSource(discord.PCMVolumeTransformer):
     async def from_url(cls, url, *, loop=None, stream=False, added_options=""):
         loop = loop or asyncio.get_event_loop()
         data = await loop.run_in_executor(None, lambda: ytdlp.extract_info(url, download=not stream))
+        player_list = []
 
+        # is playlist
         if 'entries' in data:
-            # take first item from a playlist
-            data = data['entries'][0]
+            for video in data['entries']:
+                filename = video['url'] if stream else ytdlp.prepare_filename(video)
+                player_list.append(cls(discord.FFmpegPCMAudio(filename, **ffmpeg_options), data=video))
 
+            return player_list
+
+        # single video
         filename = data['url'] if stream else ytdlp.prepare_filename(data)
         local_ffmpeg_options = ffmpeg_options.copy()
         local_ffmpeg_options['before_options'] += added_options
-        return cls(discord.FFmpegPCMAudio(filename, **local_ffmpeg_options), data=data)
+        return [cls(discord.FFmpegPCMAudio(filename, **local_ffmpeg_options), data=data)]

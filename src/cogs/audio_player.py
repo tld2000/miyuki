@@ -28,12 +28,12 @@ class AudioPlayer(commands.Cog):
     async def play(self, ctx, *, url, added_options=""):
         """Streams from an url (same as yt, but doesn't predownload)"""
 
-        player = await YTDLSource.from_url(url, loop=self.client.loop, stream=True, added_options=added_options)
+        player_list = await YTDLSource.from_url(url, loop=self.client.loop, stream=True, added_options=added_options)
 
         try:
-            self.queue[str(ctx.guild.id)].append(player)
+            self.queue[str(ctx.guild.id)].extend(player_list)
         except KeyError:
-            self.queue[str(ctx.guild.id)] = [player]
+            self.queue[str(ctx.guild.id)] = player_list
             self.loop[str(ctx.guild.id)] = False
 
         # or paused
@@ -56,13 +56,14 @@ class AudioPlayer(commands.Cog):
         time_list = list(map(int, arg.split(":")))[::-1]
         time_s = sum([time_list[i]*(60**i) for i in range(len(time_list))])
         url = self.queue[str(ctx.guild.id)][0].data['webpage_url']
-        player = await YTDLSource.from_url(url, loop=self.client.loop, stream=True, added_options=f' -ss {time_s}')
-        self.queue[str(ctx.guild.id)].insert(1, player)
+        player_list = await YTDLSource.from_url(url, loop=self.client.loop, stream=True, added_options=f' -ss {time_s}')
+        self.queue[str(ctx.guild.id)].insert(1, player_list[0])
         await self.skip(ctx)
 
     @commands.command()
     async def queue(self, ctx):
         for item in self.queue[str(ctx.guild.id)]:
+            print(item.title)
             pass
 
     async def play_from_url(self, ctx, url):

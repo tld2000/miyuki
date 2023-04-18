@@ -29,4 +29,4 @@ class Client(commands.Bot):
 
 
 client = Client()
-client.run(os.getenv('DISCORD_TOKEN'))
+client.run(os.getenv('DEBUG_DISCORD_TOKEN'))

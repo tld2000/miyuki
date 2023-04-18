@@ -22,6 +22,7 @@ def to_playable(query):
 def is_fb_video(url):
     if validators.url(url):
         if is_supported(url) and ('fb.watch' in url or 'facebook' in url):
+            print(69)
             if url.find('facebook') or url.find('fb'):
                 return True
 
@@ -37,8 +38,26 @@ def download_fb_video(url):
         'merge_output_format': 'mp4',
         'outtmpl': f'./temp/temp_fb.%(ext)s'
     }
-    with yt_dlp.YoutubeDL(ydl_opts_sep) as ydl:
-        ydl.download(url)
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts_sep) as ydl:
+            ydl.download(url)
+
+    except yt_dlp.DownloadError as error:
+        if "Requested format is not available" in error.msg:
+            try:
+                ydl_opts_sep['format'] = 'best'
+                with yt_dlp.YoutubeDL(ydl_opts_sep) as ydl:
+                    ydl.download(url)
+                return True
+            except yt_dlp.DownloadError:
+                pass
+        return False
+
+    except Exception as error:
+        print(error.msg)
+        return False
+
+    return True
 
 
 def get_direct_fb_video_link(url):
