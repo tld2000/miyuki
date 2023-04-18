@@ -15,7 +15,10 @@ class ChatMonitor(commands.Cog):
         # FB downloader
         if helper.is_fb_video(text):
             await message.edit(suppress=True)
-            helper.download_fb_video(text)
+            downloaded = helper.download_fb_video(text)
+            if not downloaded:
+                return
+
             size = os.path.getsize("./temp/temp_fb.mp4")
             if size > 8388608:
                 helper.get_direct_fb_video_link(text)
