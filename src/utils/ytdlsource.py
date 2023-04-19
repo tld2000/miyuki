@@ -7,11 +7,11 @@ ytdl_format_options = {
     'outtmpl': '%(extractor)s-%(id)s-%(title)s.%(ext)s',
     'restrictfilenames': True,
     'noplaylist': False,
-    'playlist_items': f'1-{100}',
+    'playlist_items': f'69-{69}',
     'nocheckcertificate': True,
     'ignoreerrors': False,
     'logtostderr': False,
-    #'quiet': True,
+    # 'quiet': True,
     'no_warnings': True,
     'default_search': 'auto',
     'source_address': '0.0.0.0',  # bind to ipv4 since ipv6 addresses cause issues sometimes
@@ -34,21 +34,26 @@ class YTDLSource(discord.PCMVolumeTransformer):
         self.url = data.get('url')
 
     @classmethod
-    async def from_url(cls, url, *, loop=None, stream=False, added_options=""):
-        loop = loop or asyncio.get_event_loop()
-        data = await loop.run_in_executor(None, lambda: ytdlp.extract_info(url, download=not stream))
-        player_list = []
-
-        # is playlist
-        if 'entries' in data:
-            for video in data['entries']:
-                filename = video['url'] if stream else ytdlp.prepare_filename(video)
-                player_list.append(cls(discord.FFmpegPCMAudio(filename, **ffmpeg_options), data=video))
-
-            return player_list
-
-        # single video
+    async def from_url(cls, data, *, loop=None, stream=False, queue, added_options=""):
         filename = data['url'] if stream else ytdlp.prepare_filename(data)
         local_ffmpeg_options = ffmpeg_options.copy()
         local_ffmpeg_options['before_options'] += added_options
-        return [cls(discord.FFmpegPCMAudio(filename, **local_ffmpeg_options), data=data)]
+        queue.append(cls(discord.FFmpegPCMAudio(filename, **local_ffmpeg_options), data=data))
+
+
+async def playlist_parse(url, loop, stream, queue, added_options=""):
+
+    for i in range(1, 101):
+        temp_ytdl_format_options = ytdl_format_options.copy()
+        temp_ytdl_format_options['playlist_items'] = f'{i}-{i}'
+        temp_extractor = yt_dlp.YoutubeDL(temp_ytdl_format_options)
+        data = temp_extractor.extract_info(url, download=False)
+        if 'entries' in data:
+            if len(data['entries']) == 0:
+                break
+            data = data['entries'][0]
+            await YTDLSource.from_url(data=data, loop=loop, stream=True, queue=queue, added_options=added_options)
+            await asyncio.sleep(0.01)
+        else:
+            await YTDLSource.from_url(data=data, loop=loop, stream=True, queue=queue, added_options=added_options)
+            break
