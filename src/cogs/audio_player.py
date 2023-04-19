@@ -1,7 +1,6 @@
 import asyncio
 from discord.ext import tasks, commands
-import nacl
-from utils.ytdlsource import YTDLSource
+from utils.ytdlsource import YTDLSource, ytdlp, playlist_parse
 
 
 class AudioPlayer(commands.Cog):
@@ -27,18 +26,15 @@ class AudioPlayer(commands.Cog):
     @commands.command(aliases=['pley', 'Play', 'PLAY', 'plya'])
     async def play(self, ctx, *, url, added_options=""):
         """Streams from an url (same as yt, but doesn't predownload)"""
-
-        player_list = await YTDLSource.from_url(url, loop=self.client.loop, stream=True, added_options=added_options)
-
-        try:
-            self.queue[str(ctx.guild.id)].extend(player_list)
-        except KeyError:
-            self.queue[str(ctx.guild.id)] = player_list
+        if not str(ctx.guild.id) in self.queue:
+            self.queue[str(ctx.guild.id)] = []
             self.loop[str(ctx.guild.id)] = False
+
+        self.client.loop.create_task(playlist_parse(url, loop=self.client.loop, stream=True, queue=self.queue[str(ctx.guild.id)], added_options=added_options))
+        await asyncio.sleep(0.01)
 
         # or paused
         if not (ctx.voice_client.is_playing()):
-            self.event_loop = asyncio.new_event_loop()
             self.play_queue(ctx)
 
     @commands.command()
@@ -63,15 +59,7 @@ class AudioPlayer(commands.Cog):
     @commands.command()
     async def queue(self, ctx):
         for item in self.queue[str(ctx.guild.id)]:
-            print(item.title)
-            pass
-
-    async def play_from_url(self, ctx, url):
-        async with ctx.typing():
-            player = await YTDLSource.from_url(url, loop=self.client.loop, stream=True)
-            ctx.voice_client.play(player, after=lambda e: print(f'Player error: {e}') if e else None)
-
-        await ctx.send(f'Now playing: {player.title}')
+            await ctx.send(item.title)
 
     @play.before_invoke
     async def ensure_voice(self, ctx):
@@ -100,6 +88,7 @@ class AudioPlayer(commands.Cog):
                 self.play_queue(ctx)
 
         ctx.voice_client.play(player, after=lambda e: after_play(e))
+        asyncio.run_coroutine_threadsafe(ctx.send(f'Playing {player.title}'), ctx.bot.loop)
 
     @tasks.loop(minutes=5.0)
     async def stop_task(self):
