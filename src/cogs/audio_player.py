@@ -25,6 +25,8 @@ class AudioPlayer(commands.Cog):
 
     @commands.command(aliases=['pley', 'Play', 'PLAY', 'plya'])
     async def play(self, ctx, *, url, added_options=""):
+        print("a")
+        print(url)
         """Streams from an url (same as yt, but doesn't predownload)"""
         if not str(ctx.guild.id) in self.queue:
             self.queue[str(ctx.guild.id)] = []
